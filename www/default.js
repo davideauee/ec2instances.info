@@ -14,7 +14,8 @@ var g_settings_defaults = {
   min_memory_per_vcpu: 0,
   min_storage: 0,
   selected: '',
-  compare_on: false
+  compare_on: false,
+  measuring_units_on: true
 };
 
 function init_data_table() {
@@ -193,9 +194,8 @@ function change_cost(duration, pricing_unit) {
   };
 
   var measuring_units = {
-    'instances': '',
     'vcpu': 'vCPU',
-    'ecu': 'ECU',
+    'ecu': 'units',
     'memory': 'GiB'
   };
 
@@ -203,9 +203,14 @@ function change_cost(duration, pricing_unit) {
   var pricing_unit_modifier = 1;
   var per_time;
 
-  var pricing_measuring_units = ' ' + duration
-  if (pricing_unit != 'instance') {
-    pricing_measuring_units = pricing_measuring_units + ' / ' + measuring_units[pricing_unit];
+  // not relying on the "hiddable" class to control suffix rendering as the change_cost() overwrites
+  // the entire td elements html. the overlap would just muddy things.
+  var pricing_measuring_units = ''
+  if (g_settings.measuring_units_on) {
+    var pricing_measuring_units = ' ' + duration
+    if (pricing_unit != 'instance') {
+      pricing_measuring_units = pricing_measuring_units + ' per ' + measuring_units[pricing_unit];
+    }
   }
   $.each($("td.cost-ondemand"), function (i, elem) {
     elem = $(elem);
@@ -319,6 +324,7 @@ function change_reserved_term(term) {
 // Called after new columns or rows are shown as their costs may be inaccurate.
 function redraw_costs() {
   change_cost(g_settings.cost_duration, g_settings.pricing_unit);
+  apply_measuring_units_visibility();
 }
 
 function setup_column_toggle() {
@@ -369,7 +375,8 @@ function url_for_selections() {
     pricing_unit: g_settings.pricing_unit,
     cost_duration: g_settings.cost_duration,
     reserved_term: g_settings.reserved_term,
-    compare_on: g_settings.compare_on
+    compare_on: g_settings.compare_on,
+    measuring_units_on: g_settings.measuring_units_on
   };
 
   // avoid storing empty or default values in URL
@@ -466,6 +473,7 @@ function on_data_table_initialized() {
     $('#' + id).addClass('highlight');
   });
 
+  configure_measuring_units();
   configure_highlighting();
 
   // Allow row filtering by min-value match.
@@ -474,6 +482,7 @@ function on_data_table_initialized() {
   change_region(g_settings.region);
   change_cost(g_settings.cost_duration, g_settings.pricing_unit);
   change_reserved_term(g_settings.reserved_term);
+  apply_measuring_units_visibility();
 
   $.extend($.fn.dataTableExt.oStdClasses, {
     "sWrapper": "dataTables_wrapper form-inline"
@@ -568,6 +577,45 @@ function load_settings() {
   }
 
   return g_settings;
+}
+
+function configure_measuring_units() {
+  var $measuringUnitsBtn = $('.btn-measuring-units');
+
+  $measuringUnitsBtn.click(function () {
+    g_settings.measuring_units_on = !g_settings.measuring_units_on;
+    update_measuring_units_button();
+    change_cost(g_settings.cost_duration, g_settings.pricing_unit);
+    apply_measuring_units_visibility();
+    maybe_update_url();
+  });
+
+  update_measuring_units_button();
+}
+
+function apply_measuring_units_visibility() {
+  $.each($(".hiddable"), function (i, elem) {
+    elem = $(elem);
+    if (g_settings.measuring_units_on) {
+      elem.show()
+    } else {
+      elem.hide()
+    }
+  });
+}
+
+function update_measuring_units_button() {
+  var $measuringUnitsBtn = $('.btn-measuring-units');
+
+  if (! g_settings.measuring_units_on) {
+    $measuringUnitsBtn.text($measuringUnitsBtn.data('textOff'))
+        .addClass('btn-primary')
+        .removeClass('btn-success');
+  } else {
+    $measuringUnitsBtn.text($measuringUnitsBtn.data('textOn'))
+        .addClass('btn-success')
+        .removeClass('btn-primary');
+  }
 }
 
 function configure_highlighting() {

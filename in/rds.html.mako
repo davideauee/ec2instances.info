@@ -97,6 +97,12 @@
           </ul>
         </div>
 
+        <button class="btn btn-primary btn-measuring-units"
+          data-text-on="Hide Measuring Units"
+          data-text-off="Show Measuring Units">
+          Hide Measuring Units
+        </button>
+
         <button class="btn btn-primary btn-compare"
           data-text-on="End Compare"
           data-text-off="Compare Selected">
@@ -142,14 +148,19 @@
         <tr class='instance' id="${inst['instance_type']}">
           <td class="name">${inst['pretty_name']}</td>
           <td class="apiname">${inst['instance_type']}</td>
-          <td class="memory"><span sort="${inst['memory']}">${inst['memory']} GiB</span></td>
+          <td class="memory">
+            <span sort="${inst['memory']}">${inst['memory']}</span>
+            <span class="hiddable">IOPS</span>
+          </td>
           <td class="storage">
-          <% storage = inst['storage'] %>
-          % if storage == 'EBS Only':
-          <span sort="0">0 GiB (EBS only)</span>
-          % else:
-          <span sort="0">${inst['storage']}</span>
-          % endif
+            <% storage = inst['storage'] %>
+            % if storage == 'EBS Only':
+            <span class="hiddable">(EBS only)</span>
+            <span sort="0">0</span>
+            % else:
+            <span sort="${inst['storage']}">${inst['storage']}</span>
+            % endif
+            <span class="hiddable">GiB</span>
           </td>
           <td class="ebs-throughput">
           % if 'dedicatedEbsThroughput' not in inst:
@@ -161,14 +172,16 @@
           % endif
           <td class="processor">${inst['physicalProcessor']}</td>
           <td class="vcpus">
-            <span sort="${inst['vcpu']}">
-              ${inst['vcpu']} vCPUs
-            </span>
+            <span sort="${inst['vcpu']}">${inst['vcpu']}</span>
+            <span class="hiddable">vCPUs</span>
           </td>
           <td class="networkperf">
             <span sort="${inst['network_sort']}">
-              ${inst['network_performance']}
+              ${inst['network_performance'].replace(' Gigabit', '')}
             </span>
+            % if 'Gigabit' in inst['network_performance']:
+            <span class="hiddable">Gigabit</span>
+            % endif
           </td>
           <td class="architecture">
             % if 'i386' in inst['arch']:

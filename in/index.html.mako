@@ -108,6 +108,12 @@
           </ul>
         </div>
 
+        <button class="btn btn-primary btn-measuring-units"
+          data-text-on="Hide Measuring Units"
+          data-text-off="Show Measuring Units">
+          Hide Measuring Units
+        </button>
+
         <button class="btn btn-primary btn-compare"
           data-text-on="End Compare"
           data-text-off="Compare Selected">
@@ -140,7 +146,7 @@
           <th class="vcpus">
             <abbr title="Each virtual CPU is a hyperthread of an Intel Xeon core for M3, C4, C3, R3, HS1, G2, I2, and D2">vCPUs</abbr>
           </th>
-          <th class="memory-per-vcpu">GiB of Memory per vCPU</th>
+          <th class="memory-per-vcpu">Memory per vCPU</th>
           <th class="gpus">GPUs</th>
           <th class="gpu_model">GPU model</th>
           <th class="gpu_memory">GPU memory</th>
@@ -231,7 +237,10 @@
         <tr class='instance' id="${inst['instance_type']}">
           <td class="name">${inst['pretty_name']}</td>
           <td class="apiname">${inst['instance_type']}</td>
-          <td class="memory"><span sort="${inst['memory']}">${inst['memory']} GiB</span></td>
+          <td class="memory">
+            <span sort="${inst['memory']}">${inst['memory']}</span>
+            <span class="hiddable">GiB</span>
+          </td>
           <td class="computeunits">
             % if inst['ECU'] == 'variable':
               % if inst['base_performance']:
@@ -245,41 +254,46 @@
               <span sort="0"><a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/concepts_micro_instances.html" target="_blank">Burstable</a></span>
               % endif
             % else:
-            <span sort="${inst['ECU']}">${"%g" % (inst['ECU'],)} units</span>
+            <span sort="${inst['ECU']}">${"%g" % (inst['ECU'],)}</span>
+            <span class="hiddable">units</span>
             % endif
           </td>
           <td class="vcpus">
-            <span sort="${inst['vCPU']}">
-              ${inst['vCPU']} vCPUs
-                % if inst['burst_minutes']:
-                <abbr title="Given that a CPU Credit represents the performance of a full CPU core for one minute, the maximum credit balance is converted to CPU burst minutes per day by dividing it by the number of vCPUs.">
-                <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/t2-instances.html" target="_blank">
-                for a
-                ${"%gh %gm" % divmod(inst['burst_minutes'], 60)}
-                burst
-                </a></abbr>
-                % endif
-            </span>
+            % if inst['burst_minutes']:
+            <abbr class="hiddable" title="Given that a CPU Credit represents the performance of a full CPU core for one minute, the maximum credit balance is converted to CPU burst minutes per day by dividing it by the number of vCPUs.">
+              <a href="https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/t2-instances.html" target="_blank">
+            (for a ${"%gh %gm" % divmod(inst['burst_minutes'], 60)} burst)</a>
+            </abbr>
+            % endif
+            <span sort="${inst['vCPU']}">${inst['vCPU']}</span>
+            <span class="hiddable">vCPUs</span>
           </td>
           <td class="memory-per-vcpu">
             % if inst['memory_per_vcpu'] == 'unknown':
             <span sort="999999">unknown</span>
             % else:
-            <span sort="${inst['memory_per_vcpu']}">${"{:.2f}".format(inst['memory_per_vcpu'])} GiB/vCPU</span>
+            <span sort="${inst['memory_per_vcpu']}">${"{:.2f}".format(inst['memory_per_vcpu'])}</span>
+            <span class="hiddable">GiB per vCPU</span>
             % endif
           </td>
           <td class="gpus">${inst['GPU']}</td>
           <td class="gpu_model">${inst['GPU_model']}</td>
-          <td class="gpu_memory">${inst['GPU_memory']} GiB</td>
+          <td class="gpu_memory">
+            <span sort="${inst['GPU_memory']}">${inst['GPU_memory']}</span>
+            <span class="hiddable">GiB per vCPU</span>
+          </td>
           <td class="compute_capability">${inst['compute_capability']}</td>
           <td class="fpga">${inst['FPGA']}</td>
           <td class="ecu-per-vcpu">
             % if inst['ECU'] == 'variable':
-            <span sort="0"><a href="http://aws.amazon.com/ec2/instance-types/#burst" target="_blank">Burstable</a></span>
+            <span sort="0">
+              <a href="http://aws.amazon.com/ec2/instance-types/#burst" target="_blank">Burstable</a>
+            </span>
             % elif inst['ECU_per_vcpu'] == 'unknown':
             <span sort="0">unknown</span>
             % else:
-            <span sort="${inst['ECU_per_vcpu']}">${"%.4g" % inst['ECU_per_vcpu']} units</span>
+            <span sort="${inst['ECU_per_vcpu']}">${"%.4g" % inst['ECU_per_vcpu']}</span>
+            <span class="hiddable">units</span>
             % endif
           </td>
           <td class="physical_processor">${inst['physical_processor'] or 'unknown'}</td>
@@ -291,18 +305,20 @@
           <td class="storage">
             <% storage = inst['storage'] %>
             % if not storage:
-            <span sort="0">EBS only</span>
+            <span class="hiddable">(EBS only)</span>
+            <span sort="0">0</span>
             % else:
-            <span sort="${storage['devices']*storage['size']}">
-              ${storage['devices']*storage['size']} GiB
+            <span class="hiddable">
               % if storage['devices'] > 1:
               (${storage['devices']} * ${storage['size']} GiB ${"NVMe " if storage['nvme_ssd'] else ''}${"SSD" if storage['ssd'] else 'HDD'})
               % else:
-              ${"NVMe " if storage['nvme_ssd'] else ''}${"SSD" if storage['ssd'] else 'HDD'}
+              (${"NVMe " if storage['nvme_ssd'] else ''}${"SSD" if storage['ssd'] else 'HDD'})
               % endif
-              ${"+ 900MB swap" if storage['includes_swap_partition'] else ''}
+              ${"900MB swap + " if storage['includes_swap_partition'] else ''}
             </span>
+            <span sort="${storage['devices']*storage['size']}">${storage['devices']*storage['size']}</span>
             % endif
+            <span class="hiddable">GiB</span>
           </td>
           <td class="warmed-up">
             % if inst['storage']:
@@ -327,27 +343,27 @@
           </td>
           <td class="networkperf">
             <span sort="${inst['network_sort']}">
-              ${inst['network_performance']}
+              ${inst['network_performance'].replace(' Gigabit', '')}
             </span>
+            % if 'Gigabit' in inst['network_performance']:
+            <span class="hiddable">Gigabit</span>
+            % endif
           </td>
           <td class="ebs-max-bandwidth">
             % if not inst['ebs_max_bandwidth']:
             <span sort="0">N/A</span>
             % else:
-            <span sort="${inst['ebs_max_bandwidth']}">
-              ${inst['ebs_max_bandwidth']} Mbps  <!-- Not MB/s! -->
-            </span>
+            <span sort="${inst['ebs_max_bandwidth']}">${inst['ebs_max_bandwidth']} <!-- Not MB/s! --></span>
+            <span class="hiddable">Mbps</span>
             % endif
           </td>
           <td class="ebs-throughput">
-            <span sort="${inst['ebs_throughput']}">
-              ${inst['ebs_throughput']} Mbps  <!-- Not MB/s! -->
-            </span>
+            <span sort="${inst['ebs_throughput']}">${inst['ebs_throughput']} <!-- Not MB/s! --></span>
+            <span class="hiddable">Mbps</span>
           </td>
           <td class="ebs-iops">
-            <span sort="${inst['ebs_iops']}">
-              ${inst['ebs_iops']} IOPS
-            </span>
+            <span sort="${inst['ebs_iops']}">${inst['ebs_iops']}</span>
+            <span class="hiddable">IOPS</span>
           </td>
           <td class="ebs-as-nvme">
             % if inst['ebs_as_nvme']:
