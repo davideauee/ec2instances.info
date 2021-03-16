@@ -22,9 +22,20 @@ body {
   min-width: 600px;
 }
 
-  #filters input {
-    width: 5rem;
-  }
+#filters input {
+  width: 5rem;
+}
+
+#price_modifier {
+  margin-left: 10px; 
+  margin-bottom: 10px;
+  float: left !important;
+  min-width: 600px;
+}
+
+#price_modifier input {
+  width: 5rem;
+}
 
 #data {
   margin-top: 10px;

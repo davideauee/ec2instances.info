@@ -134,6 +134,11 @@
       Min Storage (GiB): <input data-action="datafilter" data-type="storage" class="form-control" />
     </div>
 
+    <div class="form-inline" id="price_modifier">
+      <strong><abbr title="price multiplier to apply due to discounts or managed service surcharges"> Price Modifier</abbr>:</strong>
+      <input data-action="price_modifier" data-type="price_modifier" class="form-control" />
+    </div>
+
     <table cellspacing="0" class="table table-bordered table-hover table-condensed" id="data">
       <thead>
         <tr>
